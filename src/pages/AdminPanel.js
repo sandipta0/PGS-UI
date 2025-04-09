@@ -762,7 +762,7 @@ const AdminPanel = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('adminAuth');
+    localStorage.removeItem('userAuth');
     navigate('/login');
   };
 

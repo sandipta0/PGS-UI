@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import AddAdminForm from './AddAdminForm';
+import AddEmployeeForm from "./AddEmployeeForm"; // Adjust the import path as needed
+import { CloudUpload as CloudUploadIcon } from "@mui/icons-material";
+import { EditEmployeeForm } from "./EditEmployeeForm";
 import {
   Box,
   Drawer,
@@ -19,7 +23,6 @@ import {
   Paper,
   Card,
   CardContent,
-  Container,
   CircularProgress,
   Table,
   TableBody,
@@ -29,7 +32,7 @@ import {
   TableRow,
   Button,
   Chip,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
@@ -42,9 +45,9 @@ import {
   Delete as DeleteIcon,
   Add as AddIcon,
   ArrowBack as ArrowBackIcon,
-} from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-import { getSuperAdminAuth, logoutUser } from '../utils/auth';
+} from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import { authenticateUser, logoutUser } from "../utils/auth";
 import {
   BarChart,
   Bar,
@@ -59,254 +62,260 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from 'recharts';
+} from "recharts";
+import BulkEmployeeUpload from "./BulkEmployeeUpload";
 
 const drawerWidth = 240;
 
 const SuperAdminPanel = () => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [currentPage, setCurrentPage] = useState("dashboard");
   const [anchorEl, setAnchorEl] = useState(null);
   const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedCollege, setSelectedCollege] = useState(null);
   const [selectedStudentCollege, setSelectedStudentCollege] = useState(null);
+  const [isAddAdminFormOpen, setIsAddAdminFormOpen] = useState(false);
+  const [isAddEmployeeFormOpen, setIsAddEmployeeFormOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [isEditEmployeeModalOpen, setIsEditEmployeeModalOpen] = useState(false);
+  const [currentEmployee, setCurrentEmployee] = useState(null);
 
   const colleges = [
     {
       id: 1,
-      name: 'CUTM',
+      name: "CUTM",
       employees: [
         {
           id: 1,
-          name: 'Dr. Rajesh Kumar',
-          email: 'rajesh.k@cutm.ac.in',
-          department: 'Computer Science',
-          designation: 'Professor',
-          status: 'Active'
+          name: "Dr. Rajesh Kumar",
+          email: "rajesh.k@cutm.ac.in",
+          department: "Computer Science",
+          designation: "Professor",
+          status: "Active",
         },
         {
           id: 2,
-          name: 'Dr. Priya Sharma',
-          email: 'priya.s@cutm.ac.in',
-          department: 'Electronics',
-          designation: 'Associate Professor',
-          status: 'Active'
+          name: "Dr. Priya Sharma",
+          email: "priya.s@cutm.ac.in",
+          department: "Electronics",
+          designation: "Associate Professor",
+          status: "Active",
         },
         {
           id: 3,
-          name: 'Dr. Amit Singh',
-          email: 'amit.s@cutm.ac.in',
-          department: 'Mechanical',
-          designation: 'Professor',
-          status: 'Active'
+          name: "Dr. Amit Singh",
+          email: "amit.s@cutm.ac.in",
+          department: "Mechanical",
+          designation: "Professor",
+          status: "Active",
         },
         {
           id: 4,
-          name: 'Dr. Neha Patel',
-          email: 'neha.p@cutm.ac.in',
-          department: 'Civil',
-          designation: 'Assistant Professor',
-          status: 'Active'
+          name: "Dr. Neha Patel",
+          email: "neha.p@cutm.ac.in",
+          department: "Civil",
+          designation: "Assistant Professor",
+          status: "Active",
         },
         {
           id: 5,
-          name: 'Dr. Sanjay Verma',
-          email: 'sanjay.v@cutm.ac.in',
-          department: 'Electrical',
-          designation: 'Professor',
-          status: 'Active'
-        }
-      ]
+          name: "Dr. Sanjay Verma",
+          email: "sanjay.v@cutm.ac.in",
+          department: "Electrical",
+          designation: "Professor",
+          status: "Active",
+        },
+      ],
     },
     {
       id: 2,
-      name: 'Silicon College',
+      name: "Silicon College",
       employees: [
         {
           id: 6,
-          name: 'Dr. Anjali Gupta',
-          email: 'anjali.g@silicon.ac.in',
-          department: 'Computer Science',
-          designation: 'Professor',
-          status: 'Active'
+          name: "Dr. Anjali Gupta",
+          email: "anjali.g@silicon.ac.in",
+          department: "Computer Science",
+          designation: "Professor",
+          status: "Active",
         },
         {
           id: 7,
-          name: 'Dr. Vikram Singh',
-          email: 'vikram.s@silicon.ac.in',
-          department: 'Electronics',
-          designation: 'Associate Professor',
-          status: 'Active'
+          name: "Dr. Vikram Singh",
+          email: "vikram.s@silicon.ac.in",
+          department: "Electronics",
+          designation: "Associate Professor",
+          status: "Active",
         },
         {
           id: 8,
-          name: 'Dr. Meera Desai',
-          email: 'meera.d@silicon.ac.in',
-          department: 'Mechanical',
-          designation: 'Professor',
-          status: 'Active'
+          name: "Dr. Meera Desai",
+          email: "meera.d@silicon.ac.in",
+          department: "Mechanical",
+          designation: "Professor",
+          status: "Active",
         },
         {
           id: 9,
-          name: 'Dr. Rahul Sharma',
-          email: 'rahul.s@silicon.ac.in',
-          department: 'Civil',
-          designation: 'Assistant Professor',
-          status: 'Active'
+          name: "Dr. Rahul Sharma",
+          email: "rahul.s@silicon.ac.in",
+          department: "Civil",
+          designation: "Assistant Professor",
+          status: "Active",
         },
         {
           id: 10,
-          name: 'Dr. Sneha Reddy',
-          email: 'sneha.r@silicon.ac.in',
-          department: 'Electrical',
-          designation: 'Professor',
-          status: 'Active'
-        }
-      ]
-    }
+          name: "Dr. Sneha Reddy",
+          email: "sneha.r@silicon.ac.in",
+          department: "Electrical",
+          designation: "Professor",
+          status: "Active",
+        },
+      ],
+    },
   ];
 
   const studentColleges = [
     {
       id: 1,
-      name: 'CUTM',
+      name: "CUTM",
       students: [
         {
           id: 1,
-          name: 'Rahul Sharma',
-          rollNumber: 'CUTM2023001',
-          email: 'rahul.s@cutm.ac.in',
-          department: 'Computer Science',
-          year: '3rd Year',
-          parentName: 'Mr. Amit Sharma',
-          parentEmail: 'amit.sharma@example.com',
-          parentPhone: '+91 9876543210',
-          status: 'Active'
+          name: "Rahul Sharma",
+          rollNumber: "CUTM2023001",
+          email: "rahul.s@cutm.ac.in",
+          department: "Computer Science",
+          year: "3rd Year",
+          parentName: "Mr. Amit Sharma",
+          parentEmail: "amit.sharma@example.com",
+          parentPhone: "+91 9876543210",
+          status: "Active",
         },
         {
           id: 2,
-          name: 'Priya Patel',
-          rollNumber: 'CUTM2023002',
-          email: 'priya.p@cutm.ac.in',
-          department: 'Electronics',
-          year: '2nd Year',
-          parentName: 'Mrs. Sunita Patel',
-          parentEmail: 'sunita.patel@example.com',
-          parentPhone: '+91 9876543211',
-          status: 'Active'
+          name: "Priya Patel",
+          rollNumber: "CUTM2023002",
+          email: "priya.p@cutm.ac.in",
+          department: "Electronics",
+          year: "2nd Year",
+          parentName: "Mrs. Sunita Patel",
+          parentEmail: "sunita.patel@example.com",
+          parentPhone: "+91 9876543211",
+          status: "Active",
         },
         {
           id: 3,
-          name: 'Amit Kumar',
-          rollNumber: 'CUTM2023003',
-          email: 'amit.k@cutm.ac.in',
-          department: 'Mechanical',
-          year: '4th Year',
-          parentName: 'Mr. Rajesh Kumar',
-          parentEmail: 'rajesh.kumar@example.com',
-          parentPhone: '+91 9876543212',
-          status: 'Active'
+          name: "Amit Kumar",
+          rollNumber: "CUTM2023003",
+          email: "amit.k@cutm.ac.in",
+          department: "Mechanical",
+          year: "4th Year",
+          parentName: "Mr. Rajesh Kumar",
+          parentEmail: "rajesh.kumar@example.com",
+          parentPhone: "+91 9876543212",
+          status: "Active",
         },
         {
           id: 4,
-          name: 'Neha Singh',
-          rollNumber: 'CUTM2023004',
-          email: 'neha.s@cutm.ac.in',
-          department: 'Civil',
-          year: '1st Year',
-          parentName: 'Mr. Vikram Singh',
-          parentEmail: 'vikram.singh@example.com',
-          parentPhone: '+91 9876543213',
-          status: 'Active'
+          name: "Neha Singh",
+          rollNumber: "CUTM2023004",
+          email: "neha.s@cutm.ac.in",
+          department: "Civil",
+          year: "1st Year",
+          parentName: "Mr. Vikram Singh",
+          parentEmail: "vikram.singh@example.com",
+          parentPhone: "+91 9876543213",
+          status: "Active",
         },
         {
           id: 5,
-          name: 'Sanjay Verma',
-          rollNumber: 'CUTM2023005',
-          email: 'sanjay.v@cutm.ac.in',
-          department: 'Electrical',
-          year: '3rd Year',
-          parentName: 'Mr. Ramesh Verma',
-          parentEmail: 'ramesh.verma@example.com',
-          parentPhone: '+91 9876543214',
-          status: 'Active'
-        }
-      ]
+          name: "Sanjay Verma",
+          rollNumber: "CUTM2023005",
+          email: "sanjay.v@cutm.ac.in",
+          department: "Electrical",
+          year: "3rd Year",
+          parentName: "Mr. Ramesh Verma",
+          parentEmail: "ramesh.verma@example.com",
+          parentPhone: "+91 9876543214",
+          status: "Active",
+        },
+      ],
     },
     {
       id: 2,
-      name: 'Silicon College',
+      name: "Silicon College",
       students: [
         {
           id: 6,
-          name: 'Anjali Gupta',
-          rollNumber: 'SC2023001',
-          email: 'anjali.g@silicon.ac.in',
-          department: 'Computer Science',
-          year: '2nd Year',
-          parentName: 'Mr. Sanjay Gupta',
-          parentEmail: 'sanjay.gupta@example.com',
-          parentPhone: '+91 9876543215',
-          status: 'Active'
+          name: "Anjali Gupta",
+          rollNumber: "SC2023001",
+          email: "anjali.g@silicon.ac.in",
+          department: "Computer Science",
+          year: "2nd Year",
+          parentName: "Mr. Sanjay Gupta",
+          parentEmail: "sanjay.gupta@example.com",
+          parentPhone: "+91 9876543215",
+          status: "Active",
         },
         {
           id: 7,
-          name: 'Vikram Singh',
-          rollNumber: 'SC2023002',
-          email: 'vikram.s@silicon.ac.in',
-          department: 'Electronics',
-          year: '3rd Year',
-          parentName: 'Mr. Ajay Singh',
-          parentEmail: 'ajay.singh@example.com',
-          parentPhone: '+91 9876543216',
-          status: 'Active'
+          name: "Vikram Singh",
+          rollNumber: "SC2023002",
+          email: "vikram.s@silicon.ac.in",
+          department: "Electronics",
+          year: "3rd Year",
+          parentName: "Mr. Ajay Singh",
+          parentEmail: "ajay.singh@example.com",
+          parentPhone: "+91 9876543216",
+          status: "Active",
         },
         {
           id: 8,
-          name: 'Meera Desai',
-          rollNumber: 'SC2023003',
-          email: 'meera.d@silicon.ac.in',
-          department: 'Mechanical',
-          year: '4th Year',
-          parentName: 'Mr. Ramesh Desai',
-          parentEmail: 'ramesh.desai@example.com',
-          parentPhone: '+91 9876543217',
-          status: 'Active'
+          name: "Meera Desai",
+          rollNumber: "SC2023003",
+          email: "meera.d@silicon.ac.in",
+          department: "Mechanical",
+          year: "4th Year",
+          parentName: "Mr. Ramesh Desai",
+          parentEmail: "ramesh.desai@example.com",
+          parentPhone: "+91 9876543217",
+          status: "Active",
         },
         {
           id: 9,
-          name: 'Rahul Sharma',
-          rollNumber: 'SC2023004',
-          email: 'rahul.s@silicon.ac.in',
-          department: 'Civil',
-          year: '1st Year',
-          parentName: 'Mr. Sunil Sharma',
-          parentEmail: 'sunil.sharma@example.com',
-          parentPhone: '+91 9876543218',
-          status: 'Active'
+          name: "Rahul Sharma",
+          rollNumber: "SC2023004",
+          email: "rahul.s@silicon.ac.in",
+          department: "Civil",
+          year: "1st Year",
+          parentName: "Mr. Sunil Sharma",
+          parentEmail: "sunil.sharma@example.com",
+          parentPhone: "+91 9876543218",
+          status: "Active",
         },
         {
           id: 10,
-          name: 'Sneha Reddy',
-          rollNumber: 'SC2023005',
-          email: 'sneha.r@silicon.ac.in',
-          department: 'Electrical',
-          year: '2nd Year',
-          parentName: 'Mr. Rajesh Reddy',
-          parentEmail: 'rajesh.reddy@example.com',
-          parentPhone: '+91 9876543219',
-          status: 'Active'
-        }
-      ]
-    }
+          name: "Sneha Reddy",
+          rollNumber: "SC2023005",
+          email: "sneha.r@silicon.ac.in",
+          department: "Electrical",
+          year: "2nd Year",
+          parentName: "Mr. Rajesh Reddy",
+          parentEmail: "rajesh.reddy@example.com",
+          parentPhone: "+91 9876543219",
+          status: "Active",
+        },
+      ],
+    },
   ];
 
   useEffect(() => {
-    const auth = getSuperAdminAuth();
+    const auth = authenticateUser();
     if (!auth) {
-      navigate('/login');
+      navigate("/login");
     } else {
       setLoading(false);
     }
@@ -314,12 +323,18 @@ const SuperAdminPanel = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
         <CircularProgress />
       </Box>
     );
   }
-
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
@@ -334,19 +349,78 @@ const SuperAdminPanel = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+
     setNotificationAnchorEl(null);
   };
 
   const handleLogout = () => {
     logoutUser();
-    navigate('/login');
+
+    navigate("/login");
   };
 
+  const handleEditEmployee = (employee) => {
+    setCurrentEmployee(employee);
+
+    // Add your edit logic here
+  };
+
+  const handleEditEmployeeSubmit = (updatedEmployee) => {
+    // Add your submit logic here
+
+    setCurrentEmployee(null);
+  };
+
+  // Add these if you're using them
+
+  const handleAddAdminClick = () => {
+    setIsAddAdminFormOpen(true);
+  };
+
+  const handleAddAdminClose = () => {
+    setIsAddAdminFormOpen(false);
+  };
+
+  const handleAddAdminSubmit = (formData) => {
+    // Handle admin form submission
+
+    console.log("New Admin Data:", formData);
+
+    setIsAddAdminFormOpen(false);
+  };
+
+  const handleAddEmployeeClick = () => {
+    setIsAddEmployeeFormOpen(true);
+  };
+
+  const handleAddEmployeeClose = () => {
+    setIsAddEmployeeFormOpen(false);
+  };
+
+  const handleAddEmployeeSubmit = (formData) => {
+    console.log("New Employee Data:", formData);
+
+    setIsAddEmployeeFormOpen(false);
+  };
+
+  const handleBulkUploadClick = () => {
+    setIsBulkUploadOpen(true);
+  };
+
+  const handleBulkUploadClose = () => {
+    setIsBulkUploadOpen(false);
+  };
+
+  const handleBulkUploadSubmit = (file) => {
+    console.log("Uploaded file:", file);
+
+    setIsBulkUploadOpen(false);
+  };
   const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, page: 'dashboard' },
-    { text: 'Admins', icon: <PeopleIcon />, page: 'admins' },
-    { text: 'Employees', icon: <WorkIcon />, page: 'employees' },
-    { text: 'Students', icon: <SchoolIcon />, page: 'students' },
+    { text: "Dashboard", icon: <DashboardIcon />, page: "dashboard" },
+    { text: "Admins", icon: <PeopleIcon />, page: "admins" },
+    { text: "Employees", icon: <WorkIcon />, page: "employees" },
+    { text: "Students", icon: <SchoolIcon />, page: "students" },
   ];
 
   const drawer = (
@@ -370,7 +444,9 @@ const SuperAdminPanel = () => {
           </ListItem>
         ))}
         <ListItem button onClick={handleLogout}>
-          <ListItemIcon><LogoutIcon /></ListItemIcon>
+          <ListItemIcon>
+            <LogoutIcon />
+          </ListItemIcon>
           <ListItemText primary="Logout" />
         </ListItem>
       </List>
@@ -380,29 +456,29 @@ const SuperAdminPanel = () => {
   const renderDashboard = () => {
     // Sample data for charts
     const userGrowthData = [
-      { month: 'Jan', users: 400 },
-      { month: 'Feb', users: 450 },
-      { month: 'Mar', users: 500 },
-      { month: 'Apr', users: 520 },
-      { month: 'May', users: 530 },
-      { month: 'Jun', users: 550 },
+      { month: "Jan", users: 400 },
+      { month: "Feb", users: 450 },
+      { month: "Mar", users: 500 },
+      { month: "Apr", users: 520 },
+      { month: "May", users: 530 },
+      { month: "Jun", users: 550 },
     ];
 
     const departmentDistribution = [
-      { name: 'Academic', value: 30 },
-      { name: 'Administration', value: 25 },
-      { name: 'Finance', value: 20 },
-      { name: 'Student Affairs', value: 15 },
-      { name: 'IT', value: 10 },
+      { name: "Academic", value: 30 },
+      { name: "Administration", value: 25 },
+      { name: "Finance", value: 20 },
+      { name: "Student Affairs", value: 15 },
+      { name: "IT", value: 10 },
     ];
 
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+    const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
     const complaintStatusData = [
-      { status: 'Resolved', count: 45 },
-      { status: 'Pending', count: 20 },
-      { status: 'In Progress', count: 15 },
-      { status: 'New', count: 10 },
+      { status: "Resolved", count: 45 },
+      { status: "Pending", count: 20 },
+      { status: "In Progress", count: 15 },
+      { status: "New", count: 10 },
     ];
 
     return (
@@ -420,6 +496,7 @@ const SuperAdminPanel = () => {
               </CardContent>
             </Card>
           </Grid>
+
           <Grid item xs={12} md={6} lg={3}>
             <Card>
               <CardContent>
@@ -444,7 +521,6 @@ const SuperAdminPanel = () => {
               </CardContent>
             </Card>
           </Grid>
-
           {/* User Growth Chart */}
           <Grid item xs={12} md={8}>
             <Paper sx={{ p: 2, height: 400 }}>
@@ -458,12 +534,16 @@ const SuperAdminPanel = () => {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="users" stroke="#8884d8" activeDot={{ r: 8 }} />
+                  <Line
+                    type="monotone"
+                    dataKey="users"
+                    stroke="#8884d8"
+                    activeDot={{ r: 8 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </Paper>
           </Grid>
-
           {/* Department Distribution */}
           <Grid item xs={12} md={4}>
             <Paper sx={{ p: 2, height: 400 }}>
@@ -480,10 +560,15 @@ const SuperAdminPanel = () => {
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) =>
+                      `${name} ${(percent * 100).toFixed(0)}%`
+                    }
                   >
                     {departmentDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -491,7 +576,6 @@ const SuperAdminPanel = () => {
               </ResponsiveContainer>
             </Paper>
           </Grid>
-
           {/* Complaint Status */}
           <Grid item xs={12}>
             <Paper sx={{ p: 2, height: 400 }}>
@@ -517,16 +601,28 @@ const SuperAdminPanel = () => {
 
   const renderAdmins = () => (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4">Admin Management</Typography>
         <Button
           variant="contained"
           color="primary"
           startIcon={<AddIcon />}
-          onClick={() => {/* Handle add admin */}}
+          onClick={handleAddAdminClick}
         >
           Add Admin
         </Button>
+        <AddAdminForm
+          open={isAddAdminFormOpen}
+          handleClose={handleAddAdminClose}
+          onSubmit={handleAddAdminSubmit}
+        />
       </Box>
       <TableContainer component={Paper}>
         <Table>
@@ -543,39 +639,39 @@ const SuperAdminPanel = () => {
             {[
               {
                 id: 1,
-                name: 'John Doe',
-                email: 'john.doe@example.com',
-                department: 'Academic',
-                status: 'Active'
+                name: "John Doe",
+                email: "john.doe@example.com",
+                department: "Academic",
+                status: "Active",
               },
               {
                 id: 2,
-                name: 'Jane Smith',
-                email: 'jane.smith@example.com',
-                department: 'Administration',
-                status: 'Active'
+                name: "Jane Smith",
+                email: "jane.smith@example.com",
+                department: "Administration",
+                status: "Active",
               },
               {
                 id: 3,
-                name: 'Robert Johnson',
-                email: 'robert.j@example.com',
-                department: 'Finance',
-                status: 'Inactive'
+                name: "Robert Johnson",
+                email: "robert.j@example.com",
+                department: "Finance",
+                status: "Inactive",
               },
               {
                 id: 4,
-                name: 'Emily Davis',
-                email: 'emily.d@example.com',
-                department: 'Student Affairs',
-                status: 'Active'
+                name: "Emily Davis",
+                email: "emily.d@example.com",
+                department: "Student Affairs",
+                status: "Active",
               },
               {
                 id: 5,
-                name: 'Michael Brown',
-                email: 'michael.b@example.com',
-                department: 'IT',
-                status: 'Active'
-              }
+                name: "Michael Brown",
+                email: "michael.b@example.com",
+                department: "IT",
+                status: "Active",
+              },
             ].map((admin) => (
               <TableRow key={admin.id}>
                 <TableCell>{admin.name}</TableCell>
@@ -584,22 +680,20 @@ const SuperAdminPanel = () => {
                 <TableCell>
                   <Chip
                     label={admin.status}
-                    color={admin.status === 'Active' ? 'success' : 'error'}
+                    color={admin.status === "Active" ? "success" : "error"}
                     size="small"
                   />
                 </TableCell>
                 <TableCell>
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={() => {/* Handle edit */}}
-                  >
+                  <IconButton size="small" color="primary" onClick={() => {}}>
                     <EditIcon />
                   </IconButton>
                   <IconButton
                     size="small"
                     color="error"
-                    onClick={() => {/* Handle delete */}}
+                    onClick={() => {
+                      /* Handle delete */
+                    }}
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -614,26 +708,54 @@ const SuperAdminPanel = () => {
 
   const renderEmployees = () => (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4">Employee Management</Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={() => {/* Handle add employee */}}
-        >
-          Add Employee
-        </Button>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<CloudUploadIcon />}
+            onClick={handleBulkUploadClick}
+          >
+            Bulk Upload
+          </Button>
+
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={handleAddEmployeeClick}
+          >
+            Add Employee
+          </Button>
+        </Box>
+        <AddEmployeeForm
+          open={isAddEmployeeFormOpen}
+          handleClose={handleAddEmployeeClose}
+          onSubmit={handleAddEmployeeSubmit}
+        />
+        <BulkEmployeeUpload
+          open={isBulkUploadOpen}
+          handleClose={handleBulkUploadClose}
+          onSubmit={handleBulkUploadSubmit}
+        />
       </Box>
 
       {!selectedCollege ? (
         <Grid container spacing={3}>
           {colleges.map((college) => (
             <Grid item xs={12} md={6} key={college.id}>
-              <Card 
-                sx={{ 
-                  cursor: 'pointer',
-                  '&:hover': {
+              <Card
+                sx={{
+                  cursor: "pointer",
+                  "&:hover": {
                     boxShadow: 6,
                   },
                 }}
@@ -653,7 +775,7 @@ const SuperAdminPanel = () => {
         </Grid>
       ) : (
         <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
             <IconButton onClick={() => setSelectedCollege(null)} sx={{ mr: 2 }}>
               <ArrowBackIcon />
             </IconButton>
@@ -683,7 +805,9 @@ const SuperAdminPanel = () => {
                     <TableCell>
                       <Chip
                         label={employee.status}
-                        color={employee.status === 'Active' ? 'success' : 'error'}
+                        color={
+                          employee.status === "Active" ? "success" : "error"
+                        }
                         size="small"
                       />
                     </TableCell>
@@ -691,15 +815,11 @@ const SuperAdminPanel = () => {
                       <IconButton
                         size="small"
                         color="primary"
-                        onClick={() => {/* Handle edit */}}
+                        onClick={() => handleEditEmployee(employee)}
                       >
                         <EditIcon />
                       </IconButton>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => {/* Handle delete */}}
-                      >
+                      <IconButton size="small" color="error">
                         <DeleteIcon />
                       </IconButton>
                     </TableCell>
@@ -708,6 +828,13 @@ const SuperAdminPanel = () => {
               </TableBody>
             </Table>
           </TableContainer>
+          {/* Edit Employee Dialog */}
+          <EditEmployeeForm
+            open={isEditEmployeeModalOpen}
+            handleClose={() => setIsEditEmployeeModalOpen(false)}
+            employee={currentEmployee}
+            onSubmit={handleEditEmployeeSubmit}
+          />
         </Box>
       )}
     </Box>
@@ -715,13 +842,22 @@ const SuperAdminPanel = () => {
 
   const renderStudents = () => (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4">Student Management</Typography>
         <Button
           variant="contained"
           color="primary"
           startIcon={<AddIcon />}
-          onClick={() => {/* Handle add student */}}
+          onClick={() => {
+            /* Handle add student */
+          }}
         >
           Add Student
         </Button>
@@ -731,10 +867,10 @@ const SuperAdminPanel = () => {
         <Grid container spacing={3}>
           {studentColleges.map((college) => (
             <Grid item xs={12} md={6} key={college.id}>
-              <Card 
-                sx={{ 
-                  cursor: 'pointer',
-                  '&:hover': {
+              <Card
+                sx={{
+                  cursor: "pointer",
+                  "&:hover": {
                     boxShadow: 6,
                   },
                 }}
@@ -754,8 +890,11 @@ const SuperAdminPanel = () => {
         </Grid>
       ) : (
         <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <IconButton onClick={() => setSelectedStudentCollege(null)} sx={{ mr: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+            <IconButton
+              onClick={() => setSelectedStudentCollege(null)}
+              sx={{ mr: 2 }}
+            >
               <ArrowBackIcon />
             </IconButton>
             <Typography variant="h5">
@@ -776,21 +915,39 @@ const SuperAdminPanel = () => {
                 {selectedStudentCollege.students.map((student) => (
                   <TableRow key={student.id}>
                     <TableCell>
-                      <Typography variant="subtitle1">{student.name}</Typography>
-                      <Typography variant="body2">Roll No: {student.rollNumber}</Typography>
-                      <Typography variant="body2">Email: {student.email}</Typography>
-                      <Typography variant="body2">Department: {student.department}</Typography>
-                      <Typography variant="body2">Year: {student.year}</Typography>
+                      <Typography variant="subtitle1">
+                        {student.name}
+                      </Typography>
+                      <Typography variant="body2">
+                        Roll No: {student.rollNumber}
+                      </Typography>
+                      <Typography variant="body2">
+                        Email: {student.email}
+                      </Typography>
+                      <Typography variant="body2">
+                        Department: {student.department}
+                      </Typography>
+                      <Typography variant="body2">
+                        Year: {student.year}
+                      </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="subtitle2">{student.parentName}</Typography>
-                      <Typography variant="body2">Email: {student.parentEmail}</Typography>
-                      <Typography variant="body2">Phone: {student.parentPhone}</Typography>
+                      <Typography variant="subtitle2">
+                        {student.parentName}
+                      </Typography>
+                      <Typography variant="body2">
+                        Email: {student.parentEmail}
+                      </Typography>
+                      <Typography variant="body2">
+                        Phone: {student.parentPhone}
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       <Chip
                         label={student.status}
-                        color={student.status === 'Active' ? 'success' : 'error'}
+                        color={
+                          student.status === "Active" ? "success" : "error"
+                        }
                         size="small"
                       />
                     </TableCell>
@@ -798,14 +955,18 @@ const SuperAdminPanel = () => {
                       <IconButton
                         size="small"
                         color="primary"
-                        onClick={() => {/* Handle edit */}}
+                        onClick={() => {
+                          /* Handle edit */
+                        }}
                       >
                         <EditIcon />
                       </IconButton>
                       <IconButton
                         size="small"
                         color="error"
-                        onClick={() => {/* Handle delete */}}
+                        onClick={() => {
+                          /* Handle delete */
+                        }}
                       >
                         <DeleteIcon />
                       </IconButton>
@@ -822,13 +983,13 @@ const SuperAdminPanel = () => {
 
   const renderContent = () => {
     switch (currentPage) {
-      case 'dashboard':
+      case "dashboard":
         return renderDashboard();
-      case 'admins':
+      case "admins":
         return renderAdmins();
-      case 'employees':
+      case "employees":
         return renderEmployees();
-      case 'students':
+      case "students":
         return renderStudents();
       default:
         return renderDashboard();
@@ -836,13 +997,13 @@ const SuperAdminPanel = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: "flex" }}>
       <AppBar
         position="fixed"
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
-          bgcolor: '#1976d2',
+          bgcolor: "#1976d2",
         }}
       >
         <Toolbar>
@@ -851,7 +1012,7 @@ const SuperAdminPanel = () => {
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
+            sx={{ mr: 2, display: { sm: "none" } }}
           >
             <MenuIcon />
           </IconButton>
@@ -894,8 +1055,11 @@ const SuperAdminPanel = () => {
             keepMounted: true,
           }}
           sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            display: { xs: "block", sm: "none" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: drawerWidth,
+            },
           }}
         >
           {drawer}
@@ -903,8 +1067,11 @@ const SuperAdminPanel = () => {
         <Drawer
           variant="permanent"
           sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            display: { xs: "none", sm: "block" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: drawerWidth,
+            },
           }}
           open
         >
@@ -918,8 +1085,8 @@ const SuperAdminPanel = () => {
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          bgcolor: '#f5f5f5',
-          minHeight: '100vh',
+          bgcolor: "#f5f5f5",
+          minHeight: "100vh",
         }}
       >
         <Toolbar />
@@ -953,4 +1120,4 @@ const SuperAdminPanel = () => {
   );
 };
 
-export default SuperAdminPanel; 
+export default SuperAdminPanel;

@@ -79,7 +79,7 @@ import {
   Event as EventIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { getStudentAuth, logoutUser } from '../utils/auth';
+import { authenticateUser, logoutUser } from '../utils/auth';
 import {
   BarChart,
   Bar,
@@ -378,7 +378,7 @@ const StudentPanel = () => {
   const [filteredComplaints, setFilteredComplaints] = useState(sampleComplaints);
 
   useEffect(() => {
-    const studentAuth = getStudentAuth();
+    const studentAuth = authenticateUser();
     if (!studentAuth) {
       navigate('/login');
     } else {

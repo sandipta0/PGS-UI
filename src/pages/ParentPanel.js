@@ -58,7 +58,7 @@ import {
   Error as ErrorIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { getParentAuth, logoutUser } from '../utils/auth';
+import { authenticateUser, getParentAuth, logoutUser } from '../utils/auth';
 import {
   Timeline,
   TimelineItem,
@@ -196,7 +196,7 @@ const ParentPanel = () => {
   });
 
   useEffect(() => {
-    const auth = getParentAuth();
+    const auth = authenticateUser();
     if (!auth) {
       navigate('/login');
     }

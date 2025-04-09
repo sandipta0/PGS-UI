@@ -1,417 +1,384 @@
-import React, { useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { useFormik } from 'formik';
-import * as yup from 'yup';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Container,
   Box,
   Typography,
   TextField,
   Button,
-  Link,
   Alert,
   Paper,
   Grid,
+  Stepper,
+  Step,
+  StepLabel,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  FormHelperText,
-} from '@mui/material';
-import { registerStart, registerSuccess, registerFailure } from '../store/slices/authSlice';
-
-const parentValidationSchema = yup.object({
-  userType: yup
-    .string()
-    .oneOf(['parent'], 'Please select a valid user type')
-    .required('User type is required'),
-  firstName: yup
-    .string()
-    .required('First name is required'),
-  lastName: yup
-    .string()
-    .required('Last name is required'),
-  email: yup
-    .string()
-    .email('Enter a valid email')
-    .required('Email is required'),
-  password: yup
-    .string()
-    .min(8, 'Password should be of minimum 8 characters length')
-    .required('Password is required'),
-  confirmPassword: yup
-    .string()
-    .oneOf([yup.ref('password'), null], 'Passwords must match')
-    .required('Confirm password is required'),
-  phoneNumber: yup
-    .string()
-    .matches(/^[0-9]{10}$/, 'Phone number must be 10 digits')
-    .required('Phone number is required'),
-  gender: yup
-    .string()
-    .oneOf(['male', 'female', 'other'], 'Please select a valid gender')
-    .required('Gender is required'),
-});
-
-const studentValidationSchema = yup.object({
-  userType: yup
-    .string()
-    .oneOf(['student'], 'Please select a valid user type')
-    .required('User type is required'),
-  firstName: yup
-    .string()
-    .required('First name is required'),
-  lastName: yup
-    .string()
-    .required('Last name is required'),
-  email: yup
-    .string()
-    .email('Enter a valid email')
-    .required('Email is required'),
-  password: yup
-    .string()
-    .min(8, 'Password should be of minimum 8 characters length')
-    .required('Password is required'),
-  confirmPassword: yup
-    .string()
-    .oneOf([yup.ref('password'), null], 'Passwords must match')
-    .required('Confirm password is required'),
-  phoneNumber: yup
-    .string()
-    .matches(/^[0-9]{10}$/, 'Phone number must be 10 digits')
-    .required('Phone number is required'),
-  gender: yup
-    .string()
-    .oneOf(['male', 'female', 'other'], 'Please select a valid gender')
-    .required('Gender is required'),
-  registrationNumber: yup
-    .string()
-    .required('Registration number is required'),
-  grade: yup
-    .string()
-    .required('Grade is required'),
-  section: yup
-    .string()
-    .required('Section is required'),
-});
+} from "@mui/material";
 
 const SignUp = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.auth);
-  const [userType, setUserType] = useState('parent');
+  const [activeStep, setActiveStep] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const formik = useFormik({
-    initialValues: {
-      userType: 'parent',
-      firstName: '',
-      lastName: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      phoneNumber: '',
-      gender: '',
-      registrationNumber: '',
-      grade: '',
-      section: '',
-    },
-    validationSchema: userType === 'parent' ? parentValidationSchema : studentValidationSchema,
-    onSubmit: async (values) => {
-      try {
-        dispatch(registerStart());
-        // TODO: Replace with actual API call
-        const response = await fetch('http://localhost:8080/api/auth/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(values),
-        });
-
-        if (!response.ok) {
-          throw new Error('Registration failed');
-        }
-
-        const data = await response.json();
-        dispatch(registerSuccess(data));
-        navigate('/dashboard');
-      } catch (err) {
-        dispatch(registerFailure(err.message));
-      }
-    },
+  // Initial state matching StudentRegistrationRequest DTO
+  const [studentData, setStudentData] = useState({
+    studentFirstName: "",
+    studentLastName: "",
+    studentEmail: "",
+    registrationNumber: "",
+    department: "",
+    studentPassword: "",
+    address: "",
   });
 
-  const handleUserTypeChange = (event) => {
-    const newUserType = event.target.value;
-    setUserType(newUserType);
-    formik.setFieldValue('userType', newUserType);
-    // Reset form values when changing user type
-    formik.resetForm({
-      values: {
-        ...formik.initialValues,
-        userType: newUserType,
-      },
-    });
+  const [parentData, setParentData] = useState({
+    parentFirstName: "",
+    parentLastName: "",
+    parentEmail: "",
+    parentContactNumber: "",
+    relationship: "",
+    parentPassword: "",
+  });
+
+  const handleStudentChange = (e) => {
+    const { name, value } = e.target;
+    setStudentData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
   };
 
-  const renderCommonFields = () => (
-    <>
+  const handleParentChange = (e) => {
+    const { name, value } = e.target;
+    setParentData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+  const handleNext = () => {
+    // Add validation before moving to next step
+    if (validateStudentStep()) {
+      setActiveStep((prevActiveStep) => prevActiveStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+  };
+
+  const validateStudentStep = () => {
+    const requiredFields = [
+      "studentFirstName",
+      "studentLastName",
+      "studentEmail",
+      "registrationNumber",
+      "studentPassword",
+      "address",
+      "studentGender",
+    ];
+
+    for (let field of requiredFields) {
+      if (!studentData[field]) {
+        setError(
+          `Please fill in ${field.replace(/([A-Z])/g, " $1").toLowerCase()}`
+        );
+        return false;
+      }
+    }
+    setError("");
+    return true;
+  };
+
+  const validateParentStep = () => {
+    const requiredFields = [
+      "parentFirstName",
+      "parentLastName",
+      "parentEmail",
+      "parentContactNumber",
+      "relationship",
+      "parentPassword",
+    ];
+
+    for (let field of requiredFields) {
+      if (!parentData[field]) {
+        setError(
+          `Please fill in ${field.replace(/([A-Z])/g, " $1").toLowerCase()}`
+        );
+        return false;
+      }
+    }
+    setError("");
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validate parent step before submission
+    if (!validateParentStep()) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      // Combine student and parent data
+      const combinedData = {
+        ...studentData,
+        ...parentData,
+      };
+      console.log(combinedData);
+
+      const response = await fetch("http://localhost:8088/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(combinedData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        navigate("/login");
+      } else {
+        setError(data.message || "Registration failed");
+      }
+    } catch (err) {
+      setError("Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderStudentStep = () => (
+    <Grid container spacing={2}>
       <Grid item xs={12} sm={6}>
         <TextField
           required
           fullWidth
-          id="firstName"
           label="First Name"
-          name="firstName"
-          autoComplete="given-name"
-          value={formik.values.firstName}
-          onChange={formik.handleChange}
-          error={formik.touched.firstName && Boolean(formik.errors.firstName)}
-          helperText={formik.touched.firstName && formik.errors.firstName}
+          name="studentFirstName"
+          value={studentData.studentFirstName}
+          onChange={handleStudentChange}
         />
       </Grid>
       <Grid item xs={12} sm={6}>
         <TextField
           required
           fullWidth
-          id="lastName"
           label="Last Name"
-          name="lastName"
-          autoComplete="family-name"
-          value={formik.values.lastName}
-          onChange={formik.handleChange}
-          error={formik.touched.lastName && Boolean(formik.errors.lastName)}
-          helperText={formik.touched.lastName && formik.errors.lastName}
+          name="studentLastName"
+          value={studentData.studentLastName}
+          onChange={handleStudentChange}
         />
       </Grid>
       <Grid item xs={12}>
         <TextField
           required
           fullWidth
-          id="email"
-          label="Email Address"
-          name="email"
-          autoComplete="email"
-          value={formik.values.email}
-          onChange={formik.handleChange}
-          error={formik.touched.email && Boolean(formik.errors.email)}
-          helperText={formik.touched.email && formik.errors.email}
+          label="Email"
+          name="studentEmail"
+          type="email"
+          value={studentData.studentEmail}
+          onChange={handleStudentChange}
         />
       </Grid>
       <Grid item xs={12}>
         <TextField
           required
           fullWidth
-          name="password"
-          label="Password"
-          type="password"
-          id="password"
-          autoComplete="new-password"
-          value={formik.values.password}
-          onChange={formik.handleChange}
-          error={formik.touched.password && Boolean(formik.errors.password)}
-          helperText={formik.touched.password && formik.errors.password}
+          label="Registration Number"
+          name="registrationNumber"
+          value={studentData.registrationNumber}
+          onChange={handleStudentChange}
         />
       </Grid>
       <Grid item xs={12}>
         <TextField
           required
           fullWidth
-          name="confirmPassword"
-          label="Confirm Password"
-          type="password"
-          id="confirmPassword"
-          value={formik.values.confirmPassword}
-          onChange={formik.handleChange}
-          error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
-          helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
+          label="Department"
+          name="department"
+          value={studentData.department}
+          onChange={handleStudentChange}
         />
       </Grid>
       <Grid item xs={12}>
-        <TextField
-          required
-          fullWidth
-          name="phoneNumber"
-          label="Phone Number"
-          id="phoneNumber"
-          autoComplete="tel"
-          value={formik.values.phoneNumber}
-          onChange={formik.handleChange}
-          error={formik.touched.phoneNumber && Boolean(formik.errors.phoneNumber)}
-          helperText={formik.touched.phoneNumber && formik.errors.phoneNumber}
-        />
-      </Grid>
-      <Grid item xs={12}>
-        <FormControl fullWidth error={formik.touched.gender && Boolean(formik.errors.gender)}>
-          <InputLabel id="gender-label">Gender</InputLabel>
+        <FormControl fullWidth required>
+          <InputLabel>Gender</InputLabel>
+
           <Select
-            labelId="gender-label"
-            id="gender"
-            name="gender"
-            value={formik.values.gender}
-            onChange={formik.handleChange}
+            name="studentGender"
+            value={studentData.studentGender}
+            onChange={handleStudentChange}
             label="Gender"
           >
             <MenuItem value="male">Male</MenuItem>
+
             <MenuItem value="female">Female</MenuItem>
+
             <MenuItem value="other">Other</MenuItem>
           </Select>
-          {formik.touched.gender && formik.errors.gender && (
-            <FormHelperText>{formik.errors.gender}</FormHelperText>
-          )}
         </FormControl>
       </Grid>
-    </>
-  );
-
-  const renderStudentFields = () => (
-    <>
       <Grid item xs={12}>
         <TextField
           required
           fullWidth
-          name="registrationNumber"
-          label="Registration Number"
-          id="registrationNumber"
-          value={formik.values.registrationNumber}
-          onChange={formik.handleChange}
-          error={formik.touched.registrationNumber && Boolean(formik.errors.registrationNumber)}
-          helperText={formik.touched.registrationNumber && formik.errors.registrationNumber}
+          label="Password"
+          name="studentPassword"
+          type="password"
+          value={studentData.studentPassword}
+          onChange={handleStudentChange}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          required
+          fullWidth
+          label="Address"
+          name="address"
+          value={studentData.address}
+          onChange={handleStudentChange}
+        />
+      </Grid>
+    </Grid>
+  );
+
+  const renderParentStep = () => (
+    <Grid container spacing={2}>
+      <Grid item xs={12} sm={6}>
+        <TextField
+          required
+          fullWidth
+          label="Parent First Name"
+          name="parentFirstName"
+          value={parentData.parentFirstName}
+          onChange={handleParentChange}
         />
       </Grid>
       <Grid item xs={12} sm={6}>
-        <FormControl fullWidth error={formik.touched.grade && Boolean(formik.errors.grade)}>
-          <InputLabel id="grade-label">Grade</InputLabel>
+        <TextField
+          required
+          fullWidth
+          label="Parent Last Name"
+          name="parentLastName"
+          value={parentData.parentLastName}
+          onChange={handleParentChange}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          required
+          fullWidth
+          label="Parent Email"
+          name="parentEmail"
+          type="email"
+          value={parentData.parentEmail}
+          onChange={handleParentChange}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          required
+          fullWidth
+          label="Contact Number"
+          name="parentContactNumber"
+          value={parentData.parentContactNumber}
+          onChange={handleParentChange}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <FormControl fullWidth required>
+          <InputLabel>Relationship</InputLabel>
           <Select
-            labelId="grade-label"
-            id="grade"
-            name="grade"
-            value={formik.values.grade}
-            onChange={formik.handleChange}
-            label="Grade"
+            name="relationship"
+            value={parentData.relationship}
+            onChange={handleParentChange}
+            label="Relationship"
           >
-            {Array.from({ length: 12 }, (_, i) => (
-              <MenuItem key={i + 1} value={`Grade ${i + 1}`}>
-                Grade {i + 1}
-              </MenuItem>
-            ))}
+            <MenuItem value="father">Father</MenuItem>
+            <MenuItem value="mother">Mother</MenuItem>
+            <MenuItem value="guardian">Guardian</MenuItem>
           </Select>
-          {formik.touched.grade && formik.errors.grade && (
-            <FormHelperText>{formik.errors.grade}</FormHelperText>
-          )}
         </FormControl>
       </Grid>
-      <Grid item xs={12} sm={6}>
-        <FormControl fullWidth error={formik.touched.section && Boolean(formik.errors.section)}>
-          <InputLabel id="section-label">Section</InputLabel>
-          <Select
-            labelId="section-label"
-            id="section"
-            name="section"
-            value={formik.values.section}
-            onChange={formik.handleChange}
-            label="Section"
-          >
-            {['A', 'B', 'C', 'D'].map((section) => (
-              <MenuItem key={section} value={section}>
-                Section {section}
-              </MenuItem>
-            ))}
-          </Select>
-          {formik.touched.section && formik.errors.section && (
-            <FormHelperText>{formik.errors.section}</FormHelperText>
-          )}
-        </FormControl>
+      <Grid item xs={12}>
+        <TextField
+          required
+          fullWidth
+          label="Parent Password"
+          name="parentPassword"
+          type="password"
+          value={parentData.parentPassword}
+          onChange={handleParentChange}
+        />
       </Grid>
-    </>
+    </Grid>
   );
 
   return (
     <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 8,
-          marginBottom: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
-            Sign Up
+      <Box sx={{ marginTop: 8, marginBottom: 8 }}>
+        <Paper elevation={3} sx={{ padding: 4 }}>
+          <Typography
+            component="h1"
+            variant="h5"
+            sx={{ mb: 3, textAlign: "center" }}
+          >
+            Student and Parent Registration
           </Typography>
 
           {error && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
           )}
 
-          <Box
-            component="form"
-            onSubmit={formik.handleSubmit}
-            sx={{ width: '100%' }}
-          >
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <FormControl fullWidth error={formik.touched.userType && Boolean(formik.errors.userType)}>
-                  <InputLabel id="user-type-label">Registration Type</InputLabel>
-                  <Select
-                    labelId="user-type-label"
-                    id="userType"
-                    name="userType"
-                    value={formik.values.userType}
-                    onChange={handleUserTypeChange}
-                    label="Registration Type"
-                  >
-                    <MenuItem value="parent">Parent Registration</MenuItem>
-                    <MenuItem value="student">Student Registration</MenuItem>
-                  </Select>
-                  {formik.touched.userType && formik.errors.userType && (
-                    <FormHelperText>{formik.errors.userType}</FormHelperText>
-                  )}
-                </FormControl>
-              </Grid>
+          <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 3 }}>
+            <Step>
+              <StepLabel>Student Details</StepLabel>
+            </Step>
+            <Step>
+              <StepLabel>Parent Details</StepLabel>
+            </Step>
+          </Stepper>
 
-              {renderCommonFields()}
-              {userType === 'student' && renderStudentFields()}
+          <form onSubmit={handleSubmit}>
+            {activeStep === 0 && renderStudentStep()}
+            {activeStep === 1 && renderParentStep()}
 
-              <Grid item xs={12}>
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  sx={{ mt: 3, mb: 2 }}
-                  disabled={loading}
-                >
-                  {loading ? 'Signing up...' : 'Sign Up'}
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}
+            >
+              {activeStep === 1 && (
+                <Button onClick={handleBack} sx={{ mr: 1 }}>
+                  Back
                 </Button>
-              </Grid>
+              )}
 
-              <Grid item xs={12}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Link component={RouterLink} to="/login" variant="body2">
-                    Already have an account? Sign in
-                  </Link>
-                </Box>
-              </Grid>
-            </Grid>
-          </Box>
+              {activeStep === 0 && (
+                <Button variant="contained" onClick={handleNext}>
+                  Next
+                </Button>
+              )}
+
+              {activeStep === 1 && (
+                <Button type="submit" variant="contained" disabled={loading}>
+                  {loading ? "Registering..." : "Register"}
+                </Button>
+              )}
+            </Box>
+          </form>
         </Paper>
       </Box>
     </Container>
   );
 };
 
-export default SignUp; 
+export default SignUp;
