@@ -1,33 +1,21 @@
-import React from 'react';
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-
 import CssBaseline from '@mui/material/CssBaseline';
-
 import { getCurrentUser } from './utils/auth';
-
-
 // Pages
-
 import LandingPage from './pages/LandingPage';
-
 import Login from './pages/Login';
-
 import SignUp from './pages/SignUp';
-
 import ForgotPassword from './pages/ForgotPassword';
-
-import SuperAdminPanel from './pages/SuperAdminPanel';
-
 import AdminPanel from './pages/AdminPanel';
-
 import EmployeePanel from './pages/EmployeePanel';
-
 import ParentPanel from './pages/ParentPanel';
-
 import StudentPanel from './pages/StudentPanel';
+import Admins from './superAdminPanel/Admins';
+import Employees from './superAdminPanel/Employees';
+import Students from './superAdminPanel/Students';
+import Layout from './superAdminPanel/Layout';
+import Dashboard from './superAdminPanel/Dashboard'
 
 
 // Keep the theme configuration
@@ -101,14 +89,12 @@ const App = () => {
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Protected Dashboard Routes */}
-          <Route 
-            path="/superadmin/dashboard" 
-            element={
-             
-                <SuperAdminPanel />
-              
-            } 
-          />
+           <Route path="/superadmin" element={<Layout />}>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="admin" element={<Admins />} />
+            <Route path="employee" element={<Employees />} />
+            <Route path="student" element={<Students />} />
+          </Route>
           <Route 
             path="/admin/dashboard" 
             element={
